@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
-#include <SFML/System.hpp>
+//#include <SFML/System.hpp>
 #include <time.h>
 #include <vector>
 
