@@ -512,7 +512,6 @@ bool clearAround(T_box grid[], int height, int width, T_coord selector){
 
             if (!otherBox.isMarked && otherBox.isMine)
             {
-                getch();
                 return true;
             } else if (!otherBox.isMarked)
             {
@@ -534,24 +533,6 @@ bool select(T_box grid[], int height, int width, T_coord selector){
     bool lost = false;
     int targetIndex = selector.y*width + selector.x;    //position of box in grid
     T_box &targetBox = grid[targetIndex];
-
-    if (targetBox.isRevealed)
-    {
-        if (!targetBox.isCleared && getNumMarked(grid, height, width, selector.y, selector.x) == targetBox.value)   //when box has already been selected and all mines are marked
-        {
-            targetBox.isRevealed = true;
-            targetBox.isCleared = true;     //avoid loop where it keeps clearing around a box
-            lost = clearAround(grid, height, width, selector);
-
-        }
-    } else {
-        targetBox.isRevealed = true;
-        if (targetBox.isMine)
-        {
-            lost = true;    //lost
-            getch();
-        }
-    }
     
     if (!targetBox.isMarked)
     {
