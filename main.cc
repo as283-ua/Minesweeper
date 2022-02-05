@@ -90,7 +90,7 @@ int main(int argc, char const *argv[])
 
     do
     {
-        std::cout << "Enter number of bombs: ";
+        std::cout << "Enter number of mines: ";
         std::cin >> bombs;
     } while (bombs > height*width || bombs < 1);
 
@@ -153,7 +153,7 @@ int main(int argc, char const *argv[])
             {
                 gameStarted = true;
                 initGrid(grid, height, width, bombs, selector);
-                usleep(200);
+                //usleep(200);
             }
             
             lost = select(grid, height, width, selector);
@@ -217,7 +217,7 @@ void displayGrid(T_box grid[], int height, int width, T_coord &selector){
                 } else {
                     if (box.isMarked)
                     {
-                        std::cout << "^ ";
+                        std::cout << "\033[1;31m■ \033[0m";
                     } else {
                         std::cout << "■ ";
                     }
