@@ -510,11 +510,17 @@ bool clearAround(T_box grid[], int height, int width, T_coord selector){
 
             T_box &otherBox = grid[otherPosition];
 
+            if (otherBox.isMine)
+            {
+                return true;
+            }
+            
+
             T_coord selector;
             selector.x = otherPosition%width;
             selector.y = otherPosition/width;
 
-            select(grid, height, width, selector);
+            lost = select(grid, height, width, selector);
 
         }
         
