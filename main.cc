@@ -1,14 +1,14 @@
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
-//#include <SFML/System.hpp>
 #include <time.h>
 #include <vector>
+#include <chrono>
 
-//#include <conio.h>
 //copied getch from conio so that it's not necessary to have the library
 #include <termios.h>
 #include <unistd.h>
+
 
 #define KEY_UP 65
 #define KEY_DOWN 66
@@ -47,55 +47,134 @@ struct T_coord {
     int y = 0;
 };
 
-void displayGrid(T_box grid[], int height, int width, T_coord &selector);
 
-void displayGridDebug(T_box grid[], int height, int width);
+//credit goes to mcleary for this timer class. https://gist.github.com/mcleary/b0bf4fa88830ff7c882d
+class Timer
+{
+public:
+    void start()
+    {
+        m_StartTime = std::chrono::system_clock::now();
+        m_bRunning = true;
+    }
+    
+    void stop()
+    {
+        m_EndTime = std::chrono::system_clock::now();
+        m_bRunning = false;
+    }
+    
+    double elapsedMilliseconds()
+    {
+        std::chrono::time_point<std::chrono::system_clock> endTime;
+        
+        if(m_bRunning)
+        {
+            endTime = std::chrono::system_clock::now();
+        }
+        else
+        {
+            endTime = m_EndTime;
+        }
+        
+        return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - m_StartTime).count();
+    }
+    
+    double elapsedSeconds()
+    {
+        return elapsedMilliseconds() / 1000.0;
+    }
 
-int countRevealed(T_box grid[], int height, int width);
+private:
+    std::chrono::time_point<std::chrono::system_clock> m_StartTime;
+    std::chrono::time_point<std::chrono::system_clock> m_EndTime;
+    bool                                               m_bRunning = false;
+};
 
-void initGrid(T_box grid[], int height, int width, int bombs, T_coord firstMove);
+void clear()
+{
+    std::cout << "\x1B[2J\x1B[H";
+}
 
-void setValueBoxes(T_box grid[], int height, int width);
+void displayGrid(T_box [], int, int, T_coord &, int);
 
-int getNumMines(T_box grid[], int height, int width, int i, int j);
+void displayGridDebug(T_box [], int, int);
 
-int getNumMarked(T_box grid[], int height, int width, int i, int j);
+int countRevealed(T_box [], int, int);
 
-void mark(T_box grid[], int height, int width, int pos);
+void initGrid(T_box [], int, int, int, T_coord);
 
-bool clearAround(T_box grid[], int height, int width, T_coord selector);
+void setValueBoxes(T_box [], int, int);
 
-bool select(T_box grid[], int height, int width, T_coord selector);
+int getNumMines(T_box [], int, int, int, int);
+
+int getNumMarked(T_box [], int, int, int, int);
+
+void mark(T_box [], int, int, int , int &);
+
+bool clearAround(T_box [], int, int, T_coord);
+
+bool select(T_box [], int, int, T_coord);
 
 
 
 int main(int argc, char const *argv[])
 {
-    int width, height, bombs;
-    system("clear");
+    int width, height, bombs, bombs_left;
+    clear();
     
     std::cout << "Arrow keys to move 'cursor'\nSpace or Enter to click box\n'a' to place flag\n'x' to quit\n\n";
 
+    std::cout << "a. Easy\nb. Medium\nc. Difficult\nd. Custom\n";
+    std::cout << "Choose a difficulty: ";
+
+    char difficulty = 'a';
     do
     {
-        std::cout << "Enter width: ";
-        std::cin >> width;
-    } while (width > 99 || width < 1);
+        std::cin >> difficulty;
+        if (difficulty != 'a' && difficulty != 'd' &&difficulty != 'c' &&difficulty != 'd')
+        {
+            std::cout << "Incorrect option. Choose again: ";
+        }
+        
+    } while (difficulty != 'a' && difficulty != 'd' &&difficulty != 'c' &&difficulty != 'd');
     
-    do
+    switch (difficulty)
     {
-        std::cout << "Enter height: ";
-        std::cin >> height;
-    } while (height > 99 || height < 1);
+    case 'a':
+        width = 9; height = 9; bombs = 10;
+        break;
+    case 'b':
+        width = 16; height = 16; bombs = 40;
+        break;
+    case 'c':
+        width = 30; height = 16; bombs = 99;
+        break;
+    default:
+        do
+        {
+            std::cout << "Enter width: ";
+            std::cin >> width;
+        } while (width > 99 || width < 1);
+        
+        do
+        {
+            std::cout << "Enter height: ";
+            std::cin >> height;
+        } while (height > 99 || height < 1);
 
-    do
-    {
-        std::cout << "Enter number of mines: ";
-        std::cin >> bombs;
-    } while (bombs > height*width || bombs < 1);
+        do
+        {
+            std::cout << "Enter number of mines: ";
+            std::cin >> bombs;
+        } while (bombs > height*width || bombs < 1);
 
+        break;
+    }
+    
     std::cin.ignore();
 
+    bombs_left = bombs;
     T_box grid[height*width];
     T_coord selector;
     bool lost = false;
@@ -103,12 +182,12 @@ int main(int argc, char const *argv[])
     bool gameStarted = false;
     int selection = -1;
 
+    Timer timer; timer.start();
+
     while (selection != 'x' && !lost && !won)
     {
-        system("clear");
-        displayGrid(grid, height, width, selector);
-        //displayGridDebug(grid, height, width);
-
+        clear();
+        displayGrid(grid, height, width, selector, bombs_left);
         selection = getch();
 
         if (selection == 27)
@@ -153,7 +232,6 @@ int main(int argc, char const *argv[])
             {
                 gameStarted = true;
                 initGrid(grid, height, width, bombs, selector);
-                //usleep(200);
             }
             
             lost = select(grid, height, width, selector);
@@ -165,34 +243,35 @@ int main(int argc, char const *argv[])
             
         } else if (selection == KEY_A)
         {
-            mark(grid, height, width, selector.y*width + selector.x);
+            mark(grid, height, width, selector.y*width + selector.x, bombs_left);
         }
         
         
     }
 
-    system("clear");
-    displayGrid(grid, height, width, selector);
+    clear();
+    displayGrid(grid, height, width, selector, 0);
+
+    int time = timer.elapsedSeconds();
 
     if (lost == true)
     {
         std::cout << "You lost\n";
     } else if (won == true)
     {
+        std::cout << "Time: " << time << '\n';
         std::cout << "You won\n";
     }
-    
-    
     
     return 0;
 }
 
 
 
-void displayGrid(T_box grid[], int height, int width, T_coord &selector){
-    for (size_t i = 0; i < height; i++)
+void displayGrid(T_box grid[], int height, int width, T_coord &selector, int bombs_left){
+    for (int i = 0; i < height; i++)
     {
-        for (size_t j = 0; j < width; j++)
+        for (int j = 0; j < width; j++)
         {
             T_box box = grid[i*width + j];
 
@@ -228,13 +307,14 @@ void displayGrid(T_box grid[], int height, int width, T_coord &selector){
         }
         std::cout << std::endl;
     }
+    std::cout << "Mines: " << bombs_left << '\n';
     
 }
 
 void displayGridDebug(T_box grid[], int height, int width) {
-    for (size_t i = 0; i < height; i++)
+    for (int i = 0; i < height; i++)
     {
-        for (size_t j = 0; j < width; j++)
+        for (int j = 0; j < width; j++)
         {
             T_box box = grid[i*width + j];
 
@@ -263,7 +343,7 @@ void initGrid(T_box grid[], int height, int width, int bombs, T_coord firstMove)
 
     //fill vector
     int hw = height*width;
-    for (size_t i = 0; i < hw; i++)
+    for (int i = 0; i < hw; i++)
     {
         available_boxes.push_back(i);
     }    
@@ -296,9 +376,9 @@ void initGrid(T_box grid[], int height, int width, int bombs, T_coord firstMove)
             limit_left = 1;
         }
 
-        for (size_t l = 0+limit_up; l < 3-limit_down; l++)
+        for (int l = 0+limit_up; l < 3-limit_down; l++)
         {
-            for (size_t k = 0+limit_left; k < 3-limit_right; k++)
+            for (int k = 0+limit_left; k < 3-limit_right; k++)
             {
                 otherPosition = targetBox + (l-1)*width + (k-1);    //position where mine can't be placed
 
@@ -314,8 +394,6 @@ void initGrid(T_box grid[], int height, int width, int bombs, T_coord firstMove)
                     }
                     
                 }
-                
-                
                 
             }
             
@@ -447,12 +525,19 @@ int getNumMarked(T_box grid[], int height, int width, int i, int j){
 }
 
 //toggle for isMarked
-void mark(T_box grid[], int height, int width, int pos){
+void mark(T_box grid[], int height, int width, int pos, int &bombs_left){
     T_box &target = grid[pos];
 
     if (!target.isRevealed)
     {
         target.isMarked = !target.isMarked;
+        if (target.isMarked)
+        {
+            bombs_left--;
+        } else {
+            bombs_left++;
+        }
+        
     }
 }
 
