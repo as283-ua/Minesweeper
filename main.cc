@@ -138,7 +138,7 @@ int main(int argc, char const *argv[])
             std::cout << "Incorrect option. Choose again: ";
         }
         
-    } while (difficulty != 'a' && difficulty != 'd' &&difficulty != 'c' &&difficulty != 'd');
+    } while (difficulty != 'a' && difficulty != 'b' &&difficulty != 'c' &&difficulty != 'd');
     
     switch (difficulty)
     {
