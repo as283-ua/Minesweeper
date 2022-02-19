@@ -120,6 +120,7 @@ bool select(T_box [], int, int, T_coord);
 
 int main(int argc, char const *argv[])
 {
+    Start:
     int width, height, bombs, bombs_left;
     clear();
     
@@ -261,6 +262,13 @@ int main(int argc, char const *argv[])
     {
         std::cout << "Time: " << time << '\n';
         std::cout << "You won\n";
+    }
+
+    std::cout << "Play again?: ";
+    char reset = getchar();
+    if (reset=='y' || reset=='Y')
+    {
+        goto Start;
     }
     
     return 0;
