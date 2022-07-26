@@ -133,12 +133,12 @@ int main(int argc, char const *argv[])
     do
     {
         std::cin >> difficulty;
-        if (difficulty != 'a' && difficulty != 'd' &&difficulty != 'c' &&difficulty != 'd')
+        if (difficulty != 'a' && difficulty != 'b' &&difficulty != 'c' && difficulty != 'd')
         {
             std::cout << "Incorrect option. Choose again: ";
         }
         
-    } while (difficulty != 'a' && difficulty != 'b' &&difficulty != 'c' &&difficulty != 'd');
+    } while (difficulty != 'a' && difficulty != 'b' &&difficulty != 'c' && difficulty != 'd');
     
     switch (difficulty)
     {
